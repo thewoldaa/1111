@@ -1,0 +1,44 @@
+```
+# Compiled and binary files
+*.pyc
+__pycache__/
+
+# Dependencies
+.venv/
+venv/
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Python specific
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# System files
+.DS_Store
+Thumbs.db
+```

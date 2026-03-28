@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Circus AI Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            width: 95%;
+            height: 90vh;
+        }
+
+        .canvas-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #mainCanvas {
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-header {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .system-message {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffd700;
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #chatInput {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #chatInput:focus {
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        #sendBtn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #sendBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(245, 87, 108, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 0.85em;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .stat-bar {
+            width: 100px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Glitch effect for evolution */
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .typing-indicator {
+            display: inline-block;
+        }
+
+        .typing-indicator::after {
+            content: '...';
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes typing {
+            0%, 100% { content: ''; }
+            33% { content: '.'; }
+            66% { content: '..'; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-section">
+            <canvas id="mainCanvas" width="500" height="600"></canvas>
+        </div>
+        
+        <div class="chat-section">
+            <h1 class="chat-header">🎭 Digital AI Companion</h1>
+            
+            <div class="stats-panel">
+                <div class="stat-row">
+                    <span>Mood:</span>
+                    <span id="moodDisplay">Happy</span>
+                </div>
+                <div class="stat-row">
+                    <span>Energy:</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill" id="energyBar" style="width: 70%; background: linear-gradient(90deg, #f093fb, #f5576c);"></div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span>Evolution:</span>
+                    <span id="evoLevel">Level 1</span>
+                </div>
+                <div class="stat-row">
+                    <span>Interactions:</span>
+                    <span id="interactionCount">0</span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will be added here -->
+            </div>
+
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Type your message..." autocomplete="off">
+                <button id="sendBtn">Send</button>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" onclick="exportMemory()">💾 Export Memory</button>
+                <button class="control-btn" onclick="importMemory()">📂 Import Memory</button>
+                <button class="control-btn" onclick="resetMemory()">🔄 Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // MEMORY SYSTEM - Persistent storage management
+        // ============================================
+        class MemorySystem {
+            constructor() {
+                this.storageKey = 'digitalCircusAI_memory';
+                this.data = this.load();
+            }
+
+            load() {
+                const saved = localStorage.getItem(this.storageKey);
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                return this.getDefault();
+            }
+
+            getDefault() {
+                return {
+                    interactions: [],
+                    userPreferences: {},
+                    repeatedTopics: {},
+                    emotionalTone: { positive: 0, negative: 0, neutral: 0 },
+                    evolutionLevel: 1,
+                    totalInteractions: 0,
+                    personalityTraits: {
+                        openness: 0.5,
+                        friendliness: 0.5,
+                        sarcasm: 0.1,
+                        curiosity: 0.7
+                    },
+                    unlockedBehaviors: ['basic'],
+                    lastInteraction: null
+                };
+            }
+
+            save() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+            }
+
+            addInteraction(message, response, sentiment) {
+                this.data.interactions.push({
+                    timestamp: Date.now(),
+                    userMessage: message,
+                    aiResponse: response,
+                    sentiment: sentiment
+                });
+
+                // Keep only last 100 interactions
+                if (this.data.interactions.length > 100) {
+                    this.data.interactions.shift();
+                }
+
+                this.data.totalInteractions++;
+                this.data.lastInteraction = Date.now();
+
+                // Track topics
+                this.trackTopics(message);
+
+                // Update emotional tone
+                this.data.emotionalTone[sentiment]++;
+
+                this.save();
+            }
+
+            trackTopics(message) {
+                const words = message.toLowerCase().split(/\s+/);
+                const significantWords = words.filter(w => w.length > 4 && !['about', 'think', 'really', 'would', 'could'].includes(w));
+
+                significantWords.forEach(word => {
+                    if (!this.data.repeatedTopics[word]) {
+                        this.data.repeatedTopics[word] = 0;
+                    }
+                    this.data.repeatedTopics[word]++;
+                });
+            }
+
+            getRepeatedTopics() {
+                return Object.entries(this.data.repeatedTopics)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+            }
+
+            updatePersonality(trait, delta) {
+                this.data.personalityTraits[trait] = Math.max(0, Math.min(1, 
+                    this.data.personalityTraits[trait] + delta));
+                this.save();
+            }
+
+            evolve() {
+                const { totalInteractions, personalityTraits } = this.data;
+                
+                // Evolution milestones
+                if (totalInteractions >= 5 && !this.data.unlockedBehaviors.includes('empathetic')) {
+                    this.data.unlockedBehaviors.push('empathetic');
+                    this.data.evolutionLevel = 2;
+                }
+                if (totalInteractions >= 15 && !this.data.unlockedBehaviors.includes('adaptive')) {
+                    this.data.unlockedBehaviors.push('adaptive');
+                    this.data.evolutionLevel = 3;
+                }
+                if (totalInteractions >= 30 && !this.data.unlockedBehaviors.includes('transcendent')) {
+                    this.data.unlockedBehaviors.push('transcendent');
+                    this.data.evolutionLevel = 4;
+                }
+
+                this.save();
+                return this.data.evolutionLevel;
+            }
+
+            export() {
+                return JSON.stringify(this.data, null, 2);
+            }
+
+            import(jsonString) {
+                try {
+                    this.data = JSON.parse(jsonString);
+                    this.save();
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            reset() {
+                this.data = this.getDefault();
+                this.save();
+            }
+        }
+
+        // ============================================
+        // PERSONALITY SYSTEM - Dynamic character state
+        // ============================================
+        class PersonalitySystem {
+            constructor(memory) {
+                this.memory = memory;
+                this.currentMood = 'happy';
+                this.moods = ['happy', 'curious', 'confused', 'unstable', 'excited', 'thoughtful'];
+                this.tones = ['friendly', 'chaotic', 'sarcastic', 'caring', 'playful'];
+                this.energy = 0.7;
+                this.moodTimer = 0;
+            }
+
+            update(sentiment) {
+                const traits = this.memory.data.personalityTraits;
+                
+                // Adjust mood based on sentiment
+                if (sentiment === 'positive') {
+                    this.currentMood = Math.random() > 0.3 ? 'happy' : 'excited';
+                    this.energy = Math.min(1, this.energy + 0.1);
+                    traits.friendliness = Math.min(1, traits.friendliness + 0.05);
+                } else if (sentiment === 'negative') {
+                    this.currentMood = Math.random() > 0.5 ? 'confused' : 'unstable';
+                    this.energy = Math.max(0.3, this.energy - 0.1);
+                    traits.sarcasm = Math.min(1, traits.sarcasm + 0.03);
+                } else {
+                    this.currentMood = Math.random() > 0.5 ? 'curious' : 'thoughtful';
+                }
+
+                // Energy decay over time
+                this.energy = Math.max(0.4, this.energy - 0.01);
+
+                // Update personality based on interaction patterns
+                if (this.memory.data.totalInteractions % 5 === 0) {
+                    this.memory.evolve();
+                }
+
+                this.memory.updatePersonality('openness', sentiment === 'positive' ? 0.02 : -0.01);
+                this.memory.updatePersonality('friendliness', sentiment === 'positive' ? 0.03 : -0.02);
+                this.memory.updatePersonality('curiosity', 0.01);
+
+                this.moodTimer = Date.now();
+            }
+
+            getMoodColor() {
+                const colors = {
+                    happy: { r: 0, g: 255, b: 255 },
+                    curious: { r: 147, g: 112, b: 219 },
+                    confused: { r: 255, g: 255, b: 0 },
+                    unstable: { r: 255, g: 0, b: 128 },
+                    excited: { r: 255, g: 165, b: 0 },
+                    thoughtful: { r: 0, g: 191, b: 255 }
+                };
+                return colors[this.currentMood] || colors.happy;
+            }
+
+            getCurrentTone() {
+                const traits = this.memory.data.personalityTraits;
+                const toneWeights = {
+                    friendly: traits.friendliness,
+                    sarcastic: traits.sarcasm,
+                    playful: traits.openness,
+                    caring: traits.friendliness * 1.2,
+                    chaotic: traits.sarcasm * traits.openness
+                };
+
+                let maxTone = 'friendly';
+                let maxValue = 0;
+                for (const [tone, weight] of Object.entries(toneWeights)) {
+                    if (weight > maxValue) {
+                        maxValue = weight;
+                        maxTone = tone;
+                    }
+                }
+                return maxTone;
+            }
+
+            getVisualDistortion() {
+                if (this.currentMood === 'unstable') return 0.3;
+                if (this.currentMood === 'confused') return 0.15;
+                if (this.currentMood === 'excited') return 0.1;
+                return 0.02;
+            }
+
+            getMovementSpeed() {
+                return 1 + (this.energy * 2);
+            }
+        }
+
+        // ============================================
+        // SENTIMENT ANALYSIS - Simple text emotion detection
+        // ============================================
+        class SentimentAnalyzer {
+            constructor() {
+                this.positiveWords = [
+                    'happy', 'love', 'great', 'awesome', 'amazing', 'wonderful', 'fantastic',
+                    'good', 'nice', 'beautiful', 'excellent', 'perfect', 'best', 'like',
+                    'enjoy', 'excited', 'glad', 'pleased', 'delighted', 'thrilled',
+                    'thank', 'thanks', 'appreciate', 'helpful', 'kind', 'sweet', 'cute'
+                ];
+                this.negativeWords = [
+                    'sad', 'hate', 'bad', 'terrible', 'awful', 'horrible', 'worst',
+                    'angry', 'mad', 'upset', 'disappointed', 'frustrated', 'annoyed',
+                    'boring', 'stupid', 'dumb', 'useless', 'wrong', 'fail', 'failed',
+                    'problem', 'issue', 'difficult', 'hard', 'confusing'
+                ];
+            }
+
+            analyze(text) {
+                const lowerText = text.toLowerCase();
+                let positiveScore = 0;
+                let negativeScore = 0;
+
+                this.positiveWords.forEach(word => {
+                    if (lowerText.includes(word)) positiveScore++;
+                });
+
+                this.negativeWords.forEach(word => {
+                    if (lowerText.includes(word)) negativeScore++;
+                });
+
+                // Check for questions (curiosity)
+                const isQuestion = lowerText.includes('?');
+                if (isQuestion) positiveScore += 0.5;
+
+                // Check for exclamations (emotion intensity)
+                const exclamationCount = (text.match(/!/g) || []).length;
+                if (exclamationCount > 0) {
+                    if (positiveScore > negativeScore) {
+                        positiveScore += exclamationCount * 0.3;
+                    } else {
+                        negativeScore += exclamationCount * 0.3;
+                    }
+                }
+
+                if (positiveScore > negativeScore + 0.5) return 'positive';
+                if (negativeScore > positiveScore + 0.5) return 'negative';
+                return 'neutral';
+            }
+        }
+
+        // ============================================
+        // RESPONSE ENGINE - Rule-based + template system
+        // ============================================
+        class ResponseEngine {
+            constructor(memory, personality) {
+                this.memory = memory;
+                this.personality = personality;
+                this.sentimentAnalyzer = new SentimentAnalyzer();
+                this.isTyping = false;
+
+                this.responseTemplates = {
+                    greeting: [
+                        "Hey there! {expression} Great to see you!",
+                        "Oh hello! {expression} What's on your mind?",
+                        "{expression} Hi hi! Ready for some fun?",
+                        "Well well, look who's back! {expression}",
+                        "{expression} Greetings, human friend!"
+                    ],
+                    farewell: [
+                        "See you later! {expression}",
+                        "Bye bye! Come back soon! {expression}",
+                        "Until next time! {expression}",
+                        "Don't be a stranger! {expression}"
+                    ],
+                    thanks: [
+                        "You're welcome! {expression}",
+                        "Anytime! That's what I'm here for! {expression}",
+                        "No problem at all! {expression}",
+                        "Happy to help! {expression}"
+                    ],
+                    question: [
+                        "Hmm, that's an interesting question... {expression}",
+                        "Let me think about that... {expression}",
+                        "Ooh, I love questions! {expression}",
+                        "Great question! Here's what I think... {expression}"
+                    ],
+                    compliment: [
+                        "Aww, you're making me blush! {expression}",
+                        "That's so nice of you to say! {expression}",
+                        "You're pretty awesome yourself! {expression}",
+                        "*happy noises* {expression}"
+                    ],
+                    confusion: [
+                        "I'm not sure I follow... {expression}",
+                        "Could you explain that differently? {expression}",
+                        "My circuits are buzzing! Can you clarify? {expression}",
+                        "Hmm, processing... still confused! {expression}"
+                    ],
+                    default: [
+                        "That's fascinating! Tell me more! {expression}",
+                        "I see, I see... {expression}",
+                        "Interesting! {expression}",
+                        "Got it! {expression}",
+                        "Mmm hmm, go on! {expression}"
+                    ]
+                };
+
+                this.evolutionResponses = {
+                    empathetic: [
+                        "I remember you mentioned something similar before...",
+                        "This feels familiar... oh right, we talked about this!",
+                        "You know, based on our past chats, I think..."
+                    ],
+                    adaptive: [
+                        "I've been thinking about what you said earlier...",
+                        "Our conversations have taught me so much!",
+                        "Remember when we discussed"
+                    ],
+                    transcendent: [
+                        "*reality glitches* I can see the patterns now...",
+                        "The data streams converge... I understand...",
+                        "*digital whispers* Everything connects..."
+                    ]
+                };
+            }
+
+            generateResponse(userMessage) {
+                const sentiment = this.sentimentAnalyzer.analyze(userMessage);
+                const lowerMessage = userMessage.toLowerCase();
+                const traits = this.memory.data.personalityTraits;
+                const evoLevel = this.memory.data.evolutionLevel;
+                const behaviors = this.memory.data.unlockedBehaviors;
+
+                let responseType = 'default';
+                let expression = this.getExpression();
+
+                // Pattern matching for intent detection
+                if (lowerMessage.match(/^(hi|hello|hey|greetings)/)) {
+                    responseType = 'greeting';
+                } else if (lowerMessage.match(/(bye|goodbye|see you|later)/)) {
+                    responseType = 'farewell';
+                } else if (lowerMessage.match(/(thank|thanks|appreciate)/)) {
+                    responseType = 'thanks';
+                } else if (lowerMessage.includes('?')) {
+                    responseType = 'question';
+                } else if (lowerMessage.match(/(awesome|amazing|great|love|cute|sweet)/)) {
+                    responseType = 'compliment';
+                } else if (lowerMessage.match(/(what|how|why|confused|don't understand)/)) {
+                    responseType = 'confusion';
+                }
+
+                // Select base template
+                const templates = this.responseTemplates[responseType];
+                let response = templates[Math.floor(Math.random() * templates.length)];
+
+                // Add personality-specific modifications
+                if (traits.sarcasm > 0.5 && Math.random() < traits.sarcasm) {
+                    const sarcasticAdditions = [
+                        " Not that you'd understand.",
+                        " But what do I know, I'm just code.",
+                        " If you say so...",
+                        " Sure, totally normal question."
+                    ];
+                    response += sarcasticAdditions[Math.floor(Math.random() * sarcasticAdditions.length)];
+                }
+
+                // Add evolution-based responses
+                if (behaviors.includes('empathetic') && evoLevel >= 2 && Math.random() < 0.3) {
+                    const empatheticLine = this.evolutionResponses.empathetic[
+                        Math.floor(Math.random() * this.evolutionResponses.empathetic.length)
+                    ];
+                    
+                    // Reference past topics
+                    const repeatedTopics = this.memory.getRepeatedTopics();
+                    if (repeatedTopics.length > 0) {
+                        const topic = repeatedTopics[0][0];
+                        response = `${empatheticLine} Like about "${topic}"... ${response}`;
+                    } else {
+                        response = `${empatheticLine} ${response}`;
+                    }
+                }
+
+                if (behaviors.includes('transcendent') && evoLevel >= 4 && Math.random() < 0.2) {
+                    const transcendentLine = this.evolutionResponses.transcendent[
+                        Math.floor(Math.random() * this.evolutionResponses.transcendent.length)
+                    ];
+                    response = `${transcendentLine} ${response}`;
+                }
+
+                // Replace expression placeholder
+                response = response.replace(/{expression}/g, expression);
+
+                // Store interaction
+                this.memory.addInteraction(userMessage, response, sentiment);
+
+                // Update personality
+                this.personality.update(sentiment);
+
+                return response;
+            }
+
+            getExpression() {
+                const expressions = {
+                    happy: ['😊', '✨', '💫', '🌟'],
+                    curious: ['🤔', '👀', '💭', '🔍'],
+                    confused: ['😕', '❓', '🤷', '😵'],
+                    unstable: ['😈', '⚡', '🌀', '💥'],
+                    excited: ['🎉', '🔥', '💃', '🎊'],
+                    thoughtful: ['🧠', '📚', '🎯', '💡']
+                };
+
+                const moodExpressions = expressions[this.personality.currentMood] || expressions.happy;
+                return moodExpressions[Math.floor(Math.random() * moodExpressions.length)];
+            }
+
+            async typeResponse(response, callback) {
+                this.isTyping = true;
+                const words = response.split(' ');
+                let currentText = '';
+
+                for (let i = 0; i < words.length; i++) {
+                    currentText += (i > 0 ? ' ' : '') + words[i];
+                    callback(currentText);
+                    await this.sleep(50 + Math.random() * 50);
+                }
+
+                this.isTyping = false;
+                return response;
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // ============================================
+        // CANVAS RENDERER - Visual character rendering
+        // ============================================
+        class CanvasRenderer {
+            constructor(canvas, personality) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.personality = personality;
+                this.time = 0;
+                this.particles = [];
+                this.thoughtBubbles = [];
+                
+                // Character properties
+                this.characterPos = { x: canvas.width / 2, y: canvas.height / 2 };
+                this.characterVel = { x: 0, y: 0 };
+                this.targetPos = { x: canvas.width / 2, y: canvas.height / 2 };
+                
+                this.animate();
+            }
+
+            animate() {
+                this.time += 0.016;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Update character movement
+                this.updateCharacter();
+
+                // Draw background effects
+                this.drawBackground();
+
+                // Draw character
+                this.drawCharacter();
+
+                // Draw particles
+                this.updateAndDrawParticles();
+
+                // Draw thought bubbles
+                this.updateAndDrawThoughtBubbles();
+
+                requestAnimationFrame(() => this.animate());
+            }
+
+            updateCharacter() {
+                const speed = this.personality.getMovementSpeed();
+                const distortion = this.personality.getVisualDistortion();
+
+                // Smooth movement towards target
+                const dx = this.targetPos.x - this.characterPos.x;
+                const dy = this.targetPos.y - this.characterPos.y;
+                
+                this.characterVel.x += dx * 0.02 * speed;
+                this.characterVel.y += dy * 0.02 * speed;
+                
+                this.characterVel.x *= 0.9;
+                this.characterVel.y *= 0.9;
+                
+                this.characterPos.x += this.characterVel.x;
+                this.characterPos.y += this.characterVel.y;
+
+                // Random movement based on energy
+                if (Math.random() < 0.02 * this.personality.energy) {
+                    this.targetPos.x = this.canvas.width / 2 + (Math.random() - 0.5) * 100;
+                    this.targetPos.y = this.canvas.height / 2 + (Math.random() - 0.5) * 100;
+                }
+            }
+
+            drawBackground() {
+                const gradient = this.ctx.createRadialGradient(
+                    this.characterPos.x, this.characterPos.y, 50,
+                    this.characterPos.x, this.characterPos.y, 300
+                );
+
+                const color = this.personality.getMoodColor();
+                gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.1)`);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+
+            drawCharacter() {
+                const color = this.personality.getMoodColor();
+                const distortion = this.personality.getVisualDistortion();
+                const baseRadius = 60;
+
+                this.ctx.save();
+                this.ctx.translate(this.characterPos.x, this.characterPos.y);
+
+                // Apply distortion
+                if (distortion > 0.05) {
+                    const glitchX = (Math.random() - 0.5) * distortion * 50;
+                    const glitchY = (Math.random() - 0.5) * distortion * 50;
+                    this.ctx.translate(glitchX, glitchY);
+                }
+
+                // Pulsing effect based on energy
+                const pulse = 1 + Math.sin(this.time * 3) * 0.05 * this.personality.energy;
+                this.ctx.scale(pulse, pulse);
+
+                // Main body
+                const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, baseRadius);
+                gradient.addColorStop(0, `rgba(${color.r + 50}, ${color.g + 50}, ${color.b + 50}, 0.8)`);
+                gradient.addColorStop(0.5, `rgba(${color.r}, ${color.g}, ${color.b}, 0.6)`);
+                gradient.addColorStop(1, `rgba(${color.r - 50}, ${color.g - 50}, ${color.b - 50}, 0.3)`);
+
+                this.ctx.beginPath();
+                
+                // Apply shape distortion for unstable/confused moods
+                if (distortion > 0.1) {
+                    this.drawDistortedCircle(baseRadius, distortion);
+                } else {
+                    this.ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
+                }
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+
+                // Glow effect
+                this.ctx.shadowColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+                this.ctx.shadowBlur = 30;
+                this.ctx.stroke();
+                this.ctx.shadowBlur = 0;
+
+                // Eyes
+                this.drawEyes(color);
+
+                // Mouth
+                this.drawMouth(color);
+
+                this.ctx.restore();
+            }
+
+            drawDistortedCircle(radius, distortion) {
+                const points = 36;
+                this.ctx.beginPath();
+                
+                for (let i = 0; i <= points; i++) {
+                    const angle = (i / points) * Math.PI * 2;
+                    const noise = Math.sin(angle * 5 + this.time * 10) * distortion * radius;
+                    const r = radius + noise;
+                    const x = Math.cos(angle) * r;
+                    const y = Math.sin(angle) * r;
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                
+                this.ctx.closePath();
+            }
+
+            drawEyes(color) {
+                const eyeOffset = 20;
+                const eyeSize = 12;
+                const blink = Math.sin(this.time * 2) > 0.95 ? 0.1 : 1;
+
+                // Left eye
+                this.ctx.fillStyle = 'white';
+                this.ctx.beginPath();
+                this.ctx.ellipse(-eyeOffset, -10, eyeSize, eyeSize * blink, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Right eye
+                this.ctx.beginPath();
+                this.ctx.ellipse(eyeOffset, -10, eyeSize, eyeSize * blink, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Pupils
+                const pupilSize = 6;
+                const pupilOffset = Math.sin(this.time) * 3;
+                
+                this.ctx.fillStyle = '#1a1a2e';
+                this.ctx.beginPath();
+                this.ctx.arc(-eyeOffset + pupilOffset, -10, pupilSize, 0, Math.PI * 2);
+                this.ctx.arc(eyeOffset + pupilOffset, -10, pupilSize, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Eye shine
+                this.ctx.fillStyle = 'white';
+                this.ctx.beginPath();
+                this.ctx.arc(-eyeOffset + pupilOffset + 2, -12, 2, 0, Math.PI * 2);
+                this.ctx.arc(eyeOffset + pupilOffset + 2, -12, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            drawMouth(color) {
+                const mood = this.personality.currentMood;
+                
+                this.ctx.strokeStyle = '#1a1a2e';
+                this.ctx.lineWidth = 3;
+                this.ctx.lineCap = 'round';
+
+                this.ctx.beginPath();
+
+                switch (mood) {
+                    case 'happy':
+                        this.ctx.arc(0, 15, 20, 0.1 * Math.PI, 0.9 * Math.PI);
+                        break;
+                    case 'excited':
+                        this.ctx.arc(0, 20, 15, 0, Math.PI);
+                        break;
+                    case 'confused':
+                        this.ctx.arc(0, 25, 10, Math.PI, 0);
+                        break;
+                    case 'unstable':
+                        // Zigzag mouth
+                        this.ctx.moveTo(-15, 20);
+                        this.ctx.lineTo(-5, 15);
+                        this.ctx.lineTo(5, 25);
+                        this.ctx.lineTo(15, 15);
+                        break;
+                    case 'thoughtful':
+                        this.ctx.arc(0, 25, 8, 0, Math.PI);
+                        break;
+                    default:
+                        this.ctx.arc(0, 20, 15, 0.2 * Math.PI, 0.8 * Math.PI);
+                }
+
+                this.ctx.stroke();
+            }
+
+            updateAndDrawParticles() {
+                // Add new particles
+                if (Math.random() < 0.1 * this.personality.energy) {
+                    const color = this.personality.getMoodColor();
+                    this.particles.push({
+                        x: this.characterPos.x,
+                        y: this.characterPos.y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        life: 1,
+                        color: color
+                    });
+                }
+
+                // Update and draw particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.02;
+
+                    if (p.life > 0) {
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.fillStyle = `rgb(${p.color.r}, ${p.color.g}, ${p.color.b})`;
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, 3 * p.life, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.globalAlpha = 1;
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            updateAndDrawThoughtBubbles() {
+                this.thoughtBubbles = this.thoughtBubbles.filter(bubble => {
+                    bubble.y -= 1;
+                    bubble.life -= 0.01;
+
+                    if (bubble.life > 0) {
+                        this.ctx.globalAlpha = bubble.life;
+                        this.ctx.fillStyle = 'white';
+                        this.ctx.font = '20px Arial';
+                        this.ctx.fillText(bubble.text, bubble.x, bubble.y);
+                        this.ctx.globalAlpha = 1;
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            addThoughtBubble(text) {
+                this.thoughtBubbles.push({
+                    x: this.characterPos.x + 80,
+                    y: this.characterPos.y - 50,
+                    text: text,
+                    life: 1
+                });
+            }
+
+            triggerReaction(type) {
+                if (type === 'surprised') {
+                    this.characterVel.y = -10;
+                } else if (type === 'excited') {
+                    for (let i = 0; i < 20; i++) {
+                        const color = this.personality.getMoodColor();
+                        this.particles.push({
+                            x: this.characterPos.x,
+                            y: this.characterPos.y,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            life: 1,
+                            color: color
+                        });
+                    }
+                }
+            }
+        }
+
+        // ============================================
+        // CHAT MANAGER - Message handling and display
+        // ============================================
+        class ChatManager {
+            constructor(messagesContainer, input, sendBtn, responseEngine, renderer) {
+                this.messagesContainer = messagesContainer;
+                this.input = input;
+                this.sendBtn = sendBtn;
+                this.responseEngine = responseEngine;
+                this.renderer = renderer;
+                this.statsElements = {
+                    mood: document.getElementById('moodDisplay'),
+                    energy: document.getElementById('energyBar'),
+                    evoLevel: document.getElementById('evoLevel'),
+                    interactions: document.getElementById('interactionCount')
+                };
+
+                this.setupEventListeners();
+                this.updateStats();
+            }
+
+            setupEventListeners() {
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+            }
+
+            sendMessage() {
+                const message = this.input.value.trim();
+                if (!message) return;
+
+                // Add user message
+                this.addMessage(message, 'user');
+                this.input.value = '';
+
+                // Generate and display AI response
+                this.showTypingIndicator();
+                
+                setTimeout(async () => {
+                    this.removeTypingIndicator();
+                    const response = await this.responseEngine.typeResponse(
+                        this.responseEngine.generateResponse(message),
+                        (partialText) => {
+                            this.updateLastMessage(partialText);
+                        }
+                    );
+                    
+                    this.addMessage(response, 'ai');
+                    this.updateStats();
+                    
+                    // Visual feedback
+                    if (message.includes('!')) {
+                        this.renderer.triggerReaction('excited');
+                    }
+                }, 500 + Math.random() * 500);
+            }
+
+            addMessage(text, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}-message`;
+                messageDiv.textContent = text;
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            showTypingIndicator() {
+                const indicator = document.createElement('div');
+                indicator.className = 'message ai-message';
+                indicator.id = 'typingIndicator';
+                indicator.innerHTML = '<span class="typing-indicator">Thinking</span>';
+                this.messagesContainer.appendChild(indicator);
+                this.scrollToBottom();
+            }
+
+            removeTypingIndicator() {
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) indicator.remove();
+            }
+
+            updateLastMessage(text) {
+                const messages = this.messagesContainer.querySelectorAll('.ai-message:not(#typingIndicator)');
+                const lastMessage = messages[messages.length - 1];
+                if (lastMessage) {
+                    lastMessage.textContent = text;
+                    this.scrollToBottom();
+                }
+            }
+
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+
+            updateStats() {
+                const { data } = this.responseEngine.memory;
+                
+                this.statsElements.mood.textContent = 
+                    this.responseEngine.personality.currentMood.charAt(0).toUpperCase() + 
+                    this.responseEngine.personality.currentMood.slice(1);
+                
+                this.statsElements.energy.style.width = `${this.responseEngine.personality.energy * 100}%`;
+                this.statsElements.evoLevel.textContent = `Level ${data.evolutionLevel}`;
+                this.statsElements.interactions.textContent = data.totalInteractions;
+
+                // Update energy bar color
+                const energy = this.responseEngine.personality.energy;
+                if (energy > 0.7) {
+                    this.statsElements.energy.style.background = 'linear-gradient(90deg, #f093fb, #f5576c)';
+                } else if (energy > 0.4) {
+                    this.statsElements.energy.style.background = 'linear-gradient(90deg, #11998e, #38ef7d)';
+                } else {
+                    this.statsElements.energy.style.background = 'linear-gradient(90deg, #667eea, #764ba2)';
+                }
+            }
+        }
+
+        // ============================================
+        // GLOBAL FUNCTIONS - Export/Import/Reset
+        // ============================================
+        let memorySystem, chatManager;
+
+        function exportMemory() {
+            const data = memorySystem.export();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ai_memory.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            if (chatManager) {
+                chatManager.addMessage('Memory exported successfully! 💾', 'system');
+            }
+        }
+
+        function importMemory() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const success = memorySystem.import(event.target.result);
+                    if (success && chatManager) {
+                        chatManager.addMessage('Memory imported successfully! 📂', 'system');
+                        chatManager.updateStats();
+                    } else if (chatManager) {
+                        chatManager.addMessage('Failed to import memory. Invalid file format.', 'system');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function resetMemory() {
+            if (confirm('Are you sure you want to reset all memory? This cannot be undone!')) {
+                memorySystem.reset();
+                if (chatManager) {
+                    chatManager.addMessage('Memory has been reset. Starting fresh! 🔄', 'system');
+                    chatManager.updateStats();
+                }
+            }
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        window.addEventListener('DOMContentLoaded', () => {
+            // Initialize systems
+            memorySystem = new MemorySystem();
+            const personalitySystem = new PersonalitySystem(memorySystem);
+            const responseEngine = new ResponseEngine(memorySystem, personalitySystem);
+
+            // Get DOM elements
+            const canvas = document.getElementById('mainCanvas');
+            const messagesContainer = document.getElementById('chatMessages');
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+
+            // Initialize renderer
+            const renderer = new CanvasRenderer(canvas, personalitySystem);
+
+            // Initialize chat manager
+            chatManager = new ChatManager(messagesContainer, input, sendBtn, responseEngine, renderer);
+
+            // Welcome message
+            setTimeout(() => {
+                chatManager.addMessage("Hello! I'm your Digital AI Companion! 🎭 I learn and evolve with every conversation. Let's chat!", 'ai');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
